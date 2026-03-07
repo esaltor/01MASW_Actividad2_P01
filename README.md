@@ -85,7 +85,7 @@ pip install -r requirements.txt
 Si no tienes requirements.txt:
 
 ```bash
-pip install fastapi uvicorn requests beautifulsoup4
+pip install fastapi uvicorn requests beautifulsoup4 sqlalchemy sqlmodel
 ```
 
 Ejecutar el backend:
