@@ -1,6 +1,6 @@
-# SSRF y SQL Injection Demo – Aplicación Web de Prueba
+# Stored XSS Demo – Aplicación Web de Prueba
 
-Esta es una aplicación de demostración de las vulnerabilidades **SSRF (Server-Side Request Forgery)** y **SQL Injection** desarrollada como práctica de seguridad web.  
+Esta es una aplicación de demostración de la vulnerabilidad **Stored XSS (Cross-Site Scripting persistente)** desarrollada como práctica de seguridad web. 
 
 El proyecto está dividido en dos carpetas:
 
@@ -11,25 +11,17 @@ El proyecto está dividido en dos carpetas:
 
 ## 1. Introducción
 
-En cuanto a **SSRF** el objetivo ha sido:
+En cuanto a **XSS** el objetivo ha sido:
 
-- Implementar una funcionalidad aparentemente legítima en una aplicación web.
-- Introducir intencionadamente una vulnerabilidad SSRF en el backend.
-- Demostrar su explotación.
-- Implementar posteriormente una solución de mitigación.
+Implementar un sistema de anuncios donde los usuarios puedan publicar título, descripción, precio y nombre del vendedor.
 
-La aplicación desarrollada simula una herramienta de “vista previa de enlaces”, donde el usuario introduce una URL y el sistema muestra el título de la página indicada.
+Introducir intencionadamente una vulnerabilidad Stored XSS en el campo de descripción del anuncio.
 
----
+Demostrar su explotación mediante la ejecución de código JavaScript en el navegador de otros usuarios.
 
-En cuanto a **SQL Injection** el objetivo ha sido:
+Implementar posteriormente una solución de mitigación mediante sanitización y escape de caracteres en el backend y frontend.
 
-- Implementar una funcionalidad de autenticación conectada a una base de datos.
-- Introducir intencionadamente una vulnerabilidad SQL Injection en el backend.
-- Demostrar su explotación mediante manipulación de la consulta.
-- Implementar posteriormente una solución segura utilizando consultas parametrizadas.
-
-La aplicación desarrollada incluye un formulario de **login**, donde el usuario introduce su nombre de usuario y contraseña para autenticarse contra una base de datos SQLite.
+La aplicación permite publicar anuncios a través de un formulario HTML y almacenarlos en SQLite mediante endpoints de FastAPI (POST /anuncio y GET /anuncios). La vulnerabilidad se produce porque el contenido de los anuncios se muestra directamente en el frontend con innerHTML sin escaparse.
 
 ---
 
@@ -85,7 +77,7 @@ pip install -r requirements.txt
 Si no tienes requirements.txt:
 
 ```bash
-pip install fastapi uvicorn requests beautifulsoup4 sqlalchemy sqlmodel
+pip install fastapi[standard] uvicorn requests beautifulsoup4 sqlalchemy sqlmodel
 ```
 
 Ejecutar el backend:

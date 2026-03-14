@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi import Request
 from pathlib import Path
 from urllib.parse import urlparse
 import os
@@ -33,6 +34,21 @@ class Asistencia(SQLModel, table=True):
     id: int = Field(primary_key=True)
     nombre: str
     comentario: str
+
+# Crear un nuevo modelo para representar un anuncio, con título, 
+# descripción, precio y nombre del vendedor
+class Anuncio(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    titulo: str
+    descripcion: str
+    precio: float
+    vendedor: str
+
+# Crear un nuevo modelo para representar las cookies de un usuario
+class Cookie(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str
+    valor: str
 
 # Crear un modelo para representar la petición de login
 class LoginRequest(BaseModel):
@@ -331,3 +347,90 @@ async def get_asistencias_html(session: SessionDep):
         return HTMLResponse(content=html_content, status_code=200)
     except Exception as e:
         return {"error": "Could not fetch asistencias"} 
+
+# Añadir un nuevo endpoint donde se haga insert de un nuevo anuncio 
+# a las base de datos utilizando SQLModel
+@app.post("/anuncio")
+async def add_anuncio(anuncio: Anuncio, session: SessionDep):
+    try:
+        nuevo_anuncio = Anuncio(titulo=anuncio.titulo, descripcion=anuncio.descripcion, precio=anuncio.precio, vendedor=anuncio.vendedor)
+        session.add(nuevo_anuncio)
+        session.commit()
+        session.refresh(nuevo_anuncio)
+        return {"anuncio": nuevo_anuncio.dict()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/anunciovalidado")
+async def add_anuncio_validado(anuncio: Anuncio, session: SessionDep):
+    try:
+        # Escapar todo el texto de usuario
+        titulo_seguro = escape_html(anuncio.titulo)
+        descripcion_segura = escape_html(anuncio.descripcion)
+        vendedor_seguro = escape_html(anuncio.vendedor)
+
+        nuevo_anuncio = Anuncio(
+            titulo=titulo_seguro,
+            descripcion=descripcion_segura,
+            precio=anuncio.precio,
+            vendedor=vendedor_seguro
+        )
+
+        session.add(nuevo_anuncio)
+        session.commit()
+        session.refresh(nuevo_anuncio)
+        return {"anuncio": nuevo_anuncio.dict()}
+    except Exception as e:
+        return {"error": str(e)}
+
+def escape_html(texto: str) -> str:
+    return (
+        texto.replace("&", "&amp;")
+             .replace("<", "&lt;")
+             .replace(">", "&gt;")
+             .replace('"', "&quot;")
+             .replace("'", "&#x27;")
+             .replace("/", "&#x2F;")
+    )
+
+# Añadir un nuevo endpoint donde se liste todos los anuncios
+# de la base de datos utilizando SQLModel
+@app.get("/anuncios")
+async def get_anuncios(session: SessionDep):
+    try:
+        anuncios = session.exec(select(Anuncio)).all()
+        anuncios_list = [anuncio.dict() for anuncio in anuncios]
+        return {"anuncios": anuncios_list}
+    except Exception as e:
+        return {"error": "Could not fetch anuncios"}
+
+# Añdir un nuevo endpoint donde se hace un insert de unas cookies 
+# a la base de datos utilizando SQLModel
+@app.get("/cookie")
+async def add_cookie(request: Request, session: SessionDep):
+    try:
+        cookie_string = request.query_params.get("cookie")
+
+        cookies = cookie_string.split(";")
+
+        for c in cookies:
+            nombre, valor = c.strip().split("=", 1)
+
+            nueva_cookie = Cookie(nombre=nombre, valor=valor)
+            session.add(nueva_cookie)
+
+        session.commit()
+
+        return {"status": "cookies guardadas"}
+    except Exception as e:
+        return {"error": "Could not add cookie"}
+
+# Endpoint para listar las cookies guardadas en la base de datos utilizando SQLModel
+@app.get("/cookies")
+async def get_cookies(session: SessionDep):
+    try:
+        cookies = session.exec(select(Cookie)).all()
+        cookies_list = [cookie.dict() for cookie in cookies]
+        return {"cookies": cookies_list}
+    except Exception as e:
+        return {"error": "Could not fetch cookies"}

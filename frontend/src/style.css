@@ -73,3 +73,9 @@ body {
     text-align: center;
     font-weight: bold;
 }
+
+#anunciosList li {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+}
